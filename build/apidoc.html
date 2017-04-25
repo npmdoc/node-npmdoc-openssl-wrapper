@@ -1,0 +1,278 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="https://github.com/mgcrea/node-openssl-wrapper#readme"
+
+    >openssl-wrapper (v0.3.4)</a>
+</h1>
+<h4>NodeJS OpenSSL wrapper</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.openssl-wrapper">module openssl-wrapper</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.openssl-wrapper.default">
+            function <span class="apidocSignatureSpan">openssl-wrapper.</span>default
+            <span class="apidocSignatureSpan">(action, maybeBuffer, maybeOptions, maybeCallback)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.openssl-wrapper.exec">
+            function <span class="apidocSignatureSpan">openssl-wrapper.</span>exec
+            <span class="apidocSignatureSpan">(action, maybeBuffer, maybeOptions, maybeCallback)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.openssl-wrapper" id="apidoc.module.openssl-wrapper">module openssl-wrapper</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.openssl-wrapper.default" id="apidoc.element.openssl-wrapper.default">
+        function <span class="apidocSignatureSpan">openssl-wrapper.</span>default
+        <span class="apidocSignatureSpan">(action, maybeBuffer, maybeOptions, maybeCallback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function exec(action, maybeBuffer, maybeOptions, maybeCallback) {
+  // Support option re-ordering
+  var buffer = maybeBuffer;
+  var options = maybeOptions;
+  var callback = maybeCallback;
+  if (!Buffer.isBuffer(buffer)) {
+    callback = options;
+    options = buffer;
+    buffer = false;
+  }
+  if (isFunction(options)) {
+    callback = options;
+    options = {};
+  }
+
+  // Build initial params with passed action
+  var params = action.split(&#x27;.&#x27;).map(function (value, key) {
+    return !key ? value : &#x27;-&#x27; + value;
+  });
+  var lastParams = [];
+  Object.keys(options).forEach(function (key) {
+    if (options[key] === false) {
+      lastParams.push(key);
+    } else if (options[key] === true) {
+      params.push(&#x27;-&#x27; + key);
+    } else {
+      if (Array.isArray(options[key])) {
+        options[key].forEach(function (value) {
+          params.push(&#x27;-&#x27; + key, value);
+        });
+      } else {
+        params.push(&#x27;-&#x27; + key, options[key]);
+      }
+    }
+  });
+  // Append last params
+  params = params.concat(lastParams);
+
+  // Actually spawn openssl command
+  var openssl = (0, _child_process.spawn)(&#x27;openssl&#x27;, params);
+  var outResult = [];
+  var outLength = 0;
+  var errResult = [];
+  var errLength = 0;
+
+  openssl.stdout.on(&#x27;data&#x27;, function (data) {
+    outLength += data.length;
+    outResult.push(data);
+  });
+
+  openssl.stderr.on(&#x27;data&#x27;, function (data) {
+    errLength += data.length;
+    errResult.push(data);
+  });
+
+  openssl.on(&#x27;close&#x27;, function (code) {
+    var stdout = Buffer.concat(outResult, outLength);
+    var stderr = Buffer.concat(errResult, errLength).toString(&#x27;utf8&#x27;);
+    var expectedStderr = expectedStderrForAction[action];
+    var err = null;
+
+    if (code || stderr &#x26;&#x26; expectedStderr &#x26;&#x26; !stderr.match(expectedStderr)) {
+      err = new Error(stderr);
+      err.code = code;
+    }
+
+    if (isFunction(callback)) {
+      callback.apply(null, [err, stdout]);
+    }
+  });
+
+  if (buffer) {
+    openssl.stdin.write(buffer);
+  }
+
+  openssl.stdin.end();
+
+  return openssl;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+
+    <h2>
+        <a href="#apidoc.element.openssl-wrapper.exec" id="apidoc.element.openssl-wrapper.exec">
+        function <span class="apidocSignatureSpan">openssl-wrapper.</span>exec
+        <span class="apidocSignatureSpan">(action, maybeBuffer, maybeOptions, maybeCallback)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function exec(action, maybeBuffer, maybeOptions, maybeCallback) {
+  // Support option re-ordering
+  var buffer = maybeBuffer;
+  var options = maybeOptions;
+  var callback = maybeCallback;
+  if (!Buffer.isBuffer(buffer)) {
+    callback = options;
+    options = buffer;
+    buffer = false;
+  }
+  if (isFunction(options)) {
+    callback = options;
+    options = {};
+  }
+
+  // Build initial params with passed action
+  var params = action.split(&#x27;.&#x27;).map(function (value, key) {
+    return !key ? value : &#x27;-&#x27; + value;
+  });
+  var lastParams = [];
+  Object.keys(options).forEach(function (key) {
+    if (options[key] === false) {
+      lastParams.push(key);
+    } else if (options[key] === true) {
+      params.push(&#x27;-&#x27; + key);
+    } else {
+      if (Array.isArray(options[key])) {
+        options[key].forEach(function (value) {
+          params.push(&#x27;-&#x27; + key, value);
+        });
+      } else {
+        params.push(&#x27;-&#x27; + key, options[key]);
+      }
+    }
+  });
+  // Append last params
+  params = params.concat(lastParams);
+
+  // Actually spawn openssl command
+  var openssl = (0, _child_process.spawn)(&#x27;openssl&#x27;, params);
+  var outResult = [];
+  var outLength = 0;
+  var errResult = [];
+  var errLength = 0;
+
+  openssl.stdout.on(&#x27;data&#x27;, function (data) {
+    outLength += data.length;
+    outResult.push(data);
+  });
+
+  openssl.stderr.on(&#x27;data&#x27;, function (data) {
+    errLength += data.length;
+    errResult.push(data);
+  });
+
+  openssl.on(&#x27;close&#x27;, function (code) {
+    var stdout = Buffer.concat(outResult, outLength);
+    var stderr = Buffer.concat(errResult, errLength).toString(&#x27;utf8&#x27;);
+    var expectedStderr = expectedStderrForAction[action];
+    var err = null;
+
+    if (code || stderr &#x26;&#x26; expectedStderr &#x26;&#x26; !stderr.match(expectedStderr)) {
+      err = new Error(stderr);
+      err.code = code;
+    }
+
+    if (isFunction(callback)) {
+      callback.apply(null, [err, stdout]);
+    }
+  });
+
+  if (buffer) {
+    openssl.stdin.write(buffer);
+  }
+
+  openssl.stdin.end();
+
+  return openssl;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
